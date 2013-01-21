@@ -1,4 +1,4 @@
-require './volt.rb'
+require_relative '../lib/volt.rb'
 
 queue = []
 queue.push({

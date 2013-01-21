@@ -38,14 +38,14 @@ module Volt
 
           elapsed = (Time.now - @start_time)
           puts elapsed.to_s + " elapsed"
-
         end
       }
     end
 
 
     def take_snapshot(url,save_as)
-      html = `phantomjs snapshot.coffee #{url}`
+      here = File.expand_path(File.dirname(__FILE__))
+      html = `phantomjs #{here}/snapshot.coffee #{url}`
       filename = URI::escape save_as, '/'
       File.open( @options[:output_dir] + '/' + filename, 'w' ){|f| f.write(html)}
     end
