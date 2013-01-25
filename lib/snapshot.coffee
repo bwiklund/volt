@@ -5,27 +5,36 @@ phantom.injectJs "jquery.min.js"
 system = require("system")
 
 class Crawler
-  constructor: (@url,@options={}) ->
+  constructor: (@url,options={}) ->
+    @options = $.extend {}, Crawler.defaults, options
 
-    @page = require("webpage").create()
-    @page.viewportSize = { width: 1024, height: 718 }
-    @page.onConsoleMessage = (msg) -> console.log msg
+    @pages = {}
 
-    @page.open @url, (status) =>
+    @client = require("webpage").create()
+    @client.viewportSize = { width: @options.viewport_width, height: @options.viewport_height }
+    @client.onConsoleMessage = (msg) -> console.log msg
+
+    @client.open @url, (status) =>
       if status is "success"
         @wait_for_page()
 
 
+  gather_hrefs: (str) ->
+    links = $(str).find("a")
+    links.each -> console.log $(this).attr("href")
+
+
+
   wait_for_page: ->
     check_page = =>
-      ready = @page.evaluate -> $('body').attr("data-status") is "ready"
-      if ready then @read_page() else setTimeout check_page, 100
+      ready = @client.evaluate -> $('body').attr("data-status") is "ready"
+      if ready then @read_page() else setTimeout check_page, @options.check_page_interval_ms
     check_page()
 
 
   read_page: ->
     setTimeout =>
-      console.log @page.evaluate ->
+      html = @client.evaluate ->
         # trim out some junk we don't want to keep
         $('script').remove() # no point saving scripts in static pages
         $("*").removeClass "preloading"
@@ -34,8 +43,19 @@ class Crawler
 
         # and we're done
         $('html').html()
-      phantom.exit()
-    ,0#1000
+
+      @gather_hrefs html
+
+      # phantom.exit()
+    , @options.delay_before_snapshot
+
+
+  @defaults: {
+    check_page_interval_ms: 100 # how often to check if the page said it's ready
+    delay_before_snapshot: 0    # how long to wait after that, in case there's animations
+    viewport_width: 1024
+    viewport_height: 768
+  }
 
 
 
