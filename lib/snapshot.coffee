@@ -52,24 +52,27 @@ class Crawler
       console.log "next hash: " + hash
       @current_hash = hash
     
-      hack = -> window.location.hash = hash
-      hack = hack.toString().replace("hash","'#{hash}'")
+      hack = -> window.location.hash = ___hash___
+      hack = hack.toString().replace("___hash___","'#{hash[1..]}'")
 
       @client.evaluate hack
       @wait_for_page()
 
 
   cache_page: (hash,html) ->
-    @routes[@current_hash].save(html)
+    @add_route hash # in case it doesn't already exist
+    @routes[hash]?.save(html)
 
 
   wait_for_page: ->
     check_page = =>
       ready_state = @client.evaluate -> $('body').attr("data-status")
       if @last_ready_state != ready_state
+        console.log "ASDFGASDGASDGASDG"
         @last_ready_state = ready_state
         @read_page() 
       else 
+        console.log @client.evaluate -> window.location.href
         setTimeout check_page, @options.check_page_interval_ms
     check_page()
 
@@ -90,8 +93,7 @@ class Crawler
       console.log "current hash:" + hash
 
       console.log hash + " " + @current_hash
-      if hash == @current_hash
-        @cache_page hash, html
+      @cache_page hash, html
 
       @gather_hrefs html
       @open_next_uncached_route()
