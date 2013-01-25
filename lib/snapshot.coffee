@@ -37,7 +37,6 @@ class Crawler
     links = $(str).find("a")
     that = this
     links.each -> that.add_route $(this).attr("href")
-    console.log k for k,v of @routes
 
 
   add_route: (href) ->
@@ -51,11 +50,12 @@ class Crawler
       hash = next.hash
       console.log "next hash: " + hash
       @current_hash = hash
-    
+      
       hack = -> window.location.hash = ___hash___
       hack = hack.toString().replace("___hash___","'#{hash[1..]}'")
 
       @client.evaluate hack
+
       @wait_for_page()
 
 
@@ -67,18 +67,20 @@ class Crawler
   wait_for_page: ->
     check_page = =>
       ready_state = @client.evaluate -> $('body').attr("data-status")
+
       if @last_ready_state != ready_state
-        console.log "ASDFGASDGASDGASDG"
+        console.log @last_ready_state + " " + ready_state
         @last_ready_state = ready_state
         @read_page() 
       else 
-        console.log @client.evaluate -> window.location.href
+        #console.log "waiting on: " + @client.evaluate -> window.location.href
         setTimeout check_page, @options.check_page_interval_ms
     check_page()
 
 
   read_page: ->
     setTimeout =>
+      console.log "saving..."
       html = @client.evaluate ->
         # trim out some junk we don't want to keep
         $('script').remove() # no point saving scripts in static pages
@@ -92,7 +94,6 @@ class Crawler
       hash = @client.evaluate -> window.location.hash
       console.log "current hash:" + hash
 
-      console.log hash + " " + @current_hash
       @cache_page hash, html
 
       @gather_hrefs html
