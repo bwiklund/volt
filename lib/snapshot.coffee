@@ -1,14 +1,15 @@
 # phantomjs static_renderer.coffee http://localhost:3000/#\!/usa
 
+phantom.injectJs "jquery.min.js"
+
 system = require("system")
 
 class Crawler
-  constructor: (@url) ->
+  constructor: (@url,@options={}) ->
+
     @page = require("webpage").create()
     @page.viewportSize = { width: 1024, height: 718 }
-
-    @page.onConsoleMessage = (msg) ->
-      console.log msg
+    @page.onConsoleMessage = (msg) -> console.log msg
 
     @page.open @url, (status) =>
       if status is "success"
@@ -20,6 +21,7 @@ class Crawler
       ready = @page.evaluate -> $('body').attr("data-status") is "ready"
       if ready then @read_page() else setTimeout check_page, 100
     check_page()
+
 
   read_page: ->
     setTimeout =>
