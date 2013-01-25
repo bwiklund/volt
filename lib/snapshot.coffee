@@ -2,38 +2,43 @@
 
 system = require("system")
 
+class Crawler
+  constructor: (@url) ->
+    @page = require("webpage").create()
+    @page.viewportSize = { width: 1024, height: 718 }
 
-url = system.args[1] or ""
-if url.length > 0
-  page = require("webpage").create()
-  page.viewportSize = { width: 1024, height: 718 }
-  page.onConsoleMessage = (msg) ->
-    console.log msg
-  page.open url, (status) ->
-    if status is "success"
-      delay = undefined
-      checker = (->
-        ready = page.evaluate(->
-          if $('body').attr("data-status") is "ready"
-            true
-        )
-        if ready
-          clearTimeout delay
-          # give the page a grace period now, for transition animations to stop
-          # otherwise those will also be frozen in place
-          
-          setTimeout ->
-            console.log page.evaluate ->
-              # trim out some junk we don't want to keep
-              $('script').remove() # no point saving scripts in static pages
-              $("*").removeClass "preloading"
-              $("*").removeClass "preloading"
-              $("#trailer").remove()
+    @page.onConsoleMessage = (msg) ->
+      console.log msg
 
-              # and we're done
-              $('html').html()
-            phantom.exit()
-          ,1000
-      )
-      delay = setInterval(checker, 100)
+    @page.open @url, (status) =>
+      if status is "success"
+        @wait_for_page()
+
+
+  wait_for_page: ->
+    check_page = =>
+      ready = @page.evaluate -> $('body').attr("data-status") is "ready"
+      if ready then @read_page() else setTimeout check_page, 100
+    check_page()
+
+  read_page: ->
+    setTimeout =>
+      console.log @page.evaluate ->
+        # trim out some junk we don't want to keep
+        $('script').remove() # no point saving scripts in static pages
+        $("*").removeClass "preloading"
+        $("*").removeClass "preloading"
+        $("#trailer").remove()
+
+        # and we're done
+        $('html').html()
+      phantom.exit()
+    ,0#1000
+
+
+
+
+
+new Crawler "http://localhost:3000/#!/"
+
 
