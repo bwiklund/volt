@@ -4,11 +4,18 @@ phantom.injectJs "jquery.min.js"
 
 system = require("system")
 
+
+class Route
+  constructor: ->
+    @cached = false
+    @content = ""
+
+
 class Crawler
   constructor: (@url,options={}) ->
     @options = $.extend {}, Crawler.defaults, options
 
-    @pages = {}
+    @routes = {}
 
     @client = require("webpage").create()
     @client.viewportSize = { width: @options.viewport_width, height: @options.viewport_height }
@@ -21,8 +28,13 @@ class Crawler
 
   gather_hrefs: (str) ->
     links = $(str).find("a")
-    links.each -> console.log $(this).attr("href")
+    that = this
+    links.each => that.add_route $(this).attr("href")
+    console.log @routes
 
+
+  add_route: (href) ->
+    @routes[href] = new Route
 
 
   wait_for_page: ->
